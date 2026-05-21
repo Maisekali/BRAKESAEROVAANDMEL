@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brake Monitoring Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        .value { font-size: 2em; font-weight: bold; color: #333; margin: 10px 0; }
+        .label { color: #777; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Brake Monitor</h1>
+    <div class="label">Pressure</div>
+    <div id="pressure" class="value">--</div>
+    <div class="label">Deceleration</div>
+    <div id="decel" class="value">--</div>
+    <p><small id="status">Updating...</small></p>
+</div>
+
+<script>
+    const channelID = "3388446";
+    const readAPIKey = "KGEVOWE3FF90J7TF";
+    const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
+
+    async function fetchData() {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            document.getElementById('pressure').innerText = data.field1 + " Bar";
+            document.getElementById('decel').innerText = data.field2 + " m/s²";
+            document.getElementById('status').innerText = "Last update: " + new Date().toLocaleTimeString();
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            document.getElementById('status').innerText = "Update failed.";
+        }
+    }
+
+    // Refresh every 15 seconds (ThingSpeak free tier limit)
+    setInterval(fetchData, 15000);
+    fetchData();
+</script>
+
+</body>
+</html>
