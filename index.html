@@ -2,49 +2,683 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brake Monitoring Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>BRAKESAE | Precision Brake Monitoring</title>
+    <!-- Google Fonts + Font Awesome + Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; text-align: center; }
-        .value { font-size: 2em; font-weight: bold; color: #333; margin: 10px 0; }
-        .label { color: #777; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 10% 20%, #0B1120, #0A0F1A);
+            font-family: 'Inter', sans-serif;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            color: #EFF3FC;
+        }
+
+        /* main container */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* header branding */
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 1rem;
+        }
+        .logo-area h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #FFFFFF 0%, #FFB347 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        .logo-area h1 i {
+            background: none;
+            background-clip: unset;
+            -webkit-background-clip: unset;
+            color: #FF8C42;
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        .sub {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #94A3B8;
+            margin-top: 6px;
+            letter-spacing: 0.3px;
+        }
+        .byline {
+            text-align: right;
+            font-weight: 500;
+            background: rgba(255,140,66,0.12);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            backdrop-filter: blur(2px);
+            font-size: 0.9rem;
+        }
+        .byline span {
+            color: #FFB347;
+            font-weight: 700;
+        }
+
+        /* stats grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.8rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* metric cards */
+        .metric-card {
+            background: rgba(18, 25, 45, 0.75);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.5rem 1.8rem;
+            border: 1px solid rgba(255, 140, 66, 0.25);
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease, border-color 0.2s;
+        }
+        .metric-card:hover {
+            border-color: rgba(255, 140, 66, 0.6);
+            transform: translateY(-3px);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.2rem;
+        }
+        .card-header i {
+            font-size: 2rem;
+            color: #FF8C42;
+            background: rgba(255,140,66,0.15);
+            padding: 10px;
+            border-radius: 18px;
+        }
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+        .card-header h2 small {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #94A3B8;
+            margin-left: 6px;
+        }
+        .value-display {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 0.6rem 0 0.2rem;
+            line-height: 1.1;
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .value-number {
+            background: linear-gradient(135deg, #F8FAFC, #E2E8F0);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .unit {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #94A3B8;
+        }
+        .progress-section {
+            margin-top: 1.5rem;
+        }
+        .progress-bar-bg {
+            background: #1E293B;
+            border-radius: 40px;
+            height: 10px;
+            overflow: hidden;
+            margin: 8px 0 12px;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: 40px;
+            transition: width 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .pressure-fill {
+            background: linear-gradient(90deg, #FF8C42, #FFB347);
+        }
+        .decel-fill {
+            background: linear-gradient(90deg, #38BDF8, #7AA2F7);
+        }
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #6C7A91;
+        }
+        .alert-badge {
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #1E293B;
+        }
+        .status-ok {
+            color: #4ADE80;
+        }
+        .status-warning {
+            color: #FACC15;
+        }
+        .status-critical {
+            color: #F87171;
+        }
+
+        /* charts row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.8rem;
+            margin-bottom: 2rem;
+        }
+        .chart-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 1.8rem;
+            padding: 1.2rem 1.2rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: box-shadow 0.2s;
+        }
+        .chart-card h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #CBD5E1;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        canvas {
+            max-height: 220px;
+            width: 100%;
+        }
+
+        /* footer and refresh */
+        .dashboard-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.8rem;
+            color: #7C8BA0;
+        }
+        .refresh-area {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .refresh-btn {
+            background: #FF8C42;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            color: #0A0F1A;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .refresh-btn:hover {
+            background: #FFB347;
+            transform: scale(0.97);
+        }
+        .last-update {
+            font-family: monospace;
+            background: #111827;
+            padding: 6px 14px;
+            border-radius: 40px;
+        }
+        .live-badge {
+            background: #FF3B30;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.8);}
+            100% { opacity: 1; transform: scale(1.2);}
+        }
+        .error-msg {
+            color: #F87171;
+            background: rgba(248,113,113,0.1);
+            padding: 6px 12px;
+            border-radius: 40px;
+        }
+        i.fa, i.far, i.fas {
+            pointer-events: none;
+        }
+        @media (max-width: 750px) {
+            body { padding: 1.2rem; }
+            .value-display { font-size: 2.5rem; }
+            .brand-header { flex-direction: column; align-items: start; gap: 12px; }
+            .byline { text-align: left; }
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Brake Monitor</h1>
-    <div class="label">Pressure</div>
-    <div id="pressure" class="value">--</div>
-    <div class="label">Deceleration</div>
-    <div id="decel" class="value">--</div>
-    <p><small id="status">Updating...</small></p>
+<div class="dashboard-container">
+    <!-- Branding: BRAKESAE by MEL & ROVA -->
+    <div class="brand-header">
+        <div class="logo-area">
+            <h1><i class="fas fa-brake-warning"></i>BRAKESAE</h1>
+            <div class="sub">intelligent brake telemetry · real-time insight</div>
+        </div>
+        <div class="byline">
+            <i class="fas fa-cogs"></i> by <span>MEL & ROVA</span> | SAE-grade analytics
+        </div>
+    </div>
+
+    <!-- Primary metrics: Pressure & Deceleration -->
+    <div class="metrics-grid">
+        <!-- Pressure Card -->
+        <div class="metric-card">
+            <div class="card-header">
+                <i class="fas fa-tachometer-alt"></i>
+                <h2>BRAKE PRESSURE <small>primary circuit</small></h2>
+            </div>
+            <div class="value-display">
+                <span class="value-number" id="pressureValue">--</span>
+                <span class="unit">Bar</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-bar-bg">
+                    <div class="progress-fill pressure-fill" id="pressureFill" style="width: 0%;"></div>
+                </div>
+                <div class="range-labels">
+                    <span>0 Bar</span>
+                    <span>normal ▰▰▰</span>
+                    <span>180 Bar</span>
+                </div>
+            </div>
+            <div id="pressureAlert" class="alert-badge"><i class="fas fa-shield-alt"></i> <span>Monitoring</span></div>
+        </div>
+
+        <!-- Deceleration Card -->
+        <div class="metric-card">
+            <div class="card-header">
+                <i class="fas fa-arrow-down"></i>
+                <h2>DECELERATION <small>longitudinal G</small></h2>
+            </div>
+            <div class="value-display">
+                <span class="value-number" id="decelValue">--</span>
+                <span class="unit">m/s²</span>
+            </div>
+            <div class="progress-section">
+                <div class="progress-bar-bg">
+                    <div class="progress-fill decel-fill" id="decelFill" style="width: 0%;"></div>
+                </div>
+                <div class="range-labels">
+                    <span>0 m/s²</span>
+                    <span>peak 12 m/s²</span>
+                    <span>>12 m/s²</span>
+                </div>
+            </div>
+            <div id="decelAlert" class="alert-badge"><i class="fas fa-road"></i> <span>Stable</span></div>
+        </div>
+    </div>
+
+    <!-- Historical Trends Charts -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3><i class="fas fa-chart-line" style="color:#FF8C42"></i> Pressure trend (last 12 readings)</h3>
+            <canvas id="pressureChart" width="400" height="200" style="width:100%; max-height:210px"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3><i class="fas fa-chart-line" style="color:#38BDF8"></i> Deceleration trend (last 12 readings)</h3>
+            <canvas id="decelChart" width="400" height="200" style="width:100%; max-height:210px"></canvas>
+        </div>
+    </div>
+
+    <!-- Footer status & refresh -->
+    <div class="dashboard-footer">
+        <div class="system-status">
+            <span class="live-badge"></span> LIVE STREAM · <span id="sysStatusMsg">SYNCHRONIZING</span>
+        </div>
+        <div class="refresh-area">
+            <div class="last-update" id="lastUpdateText">— waiting for data —</div>
+            <button class="refresh-btn" id="manualRefreshBtn"><i class="fas fa-sync-alt"></i> Force sync</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    const channelID = "3388446";
-    const readAPIKey = "KGEVOWE3FF90J7TF";
-    const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json?api_key=${readAPIKey}`;
-
-    async function fetchData() {
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            document.getElementById('pressure').innerText = data.field1 + " Bar";
-            document.getElementById('decel').innerText = data.field2 + " m/s²";
-            document.getElementById('status').innerText = "Last update: " + new Date().toLocaleTimeString();
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            document.getElementById('status').innerText = "Update failed.";
+    // --------------------------------------------------------------
+    // THINGSPEAK CONFIGURATION (BRAKESAE CHANNEL)
+    // --------------------------------------------------------------
+    const CHANNEL_ID = "3388446";
+    const READ_API_KEY = "KGEVOWE3FF90J7TF";
+    const RESULTS_COUNT = 14;        // fetch last 14 entries for chart smoothing
+    
+    // Max reference ranges for progress bars (professional scaling)
+    const PRESSURE_MAX = 180;        // Bar (max expected pressure)
+    const DECEL_MAX = 12.0;          // m/s² max typical for heavy braking
+    
+    // Thresholds for alert visual / status
+    const PRESSURE_WARN = 125;        // Bar -> orange
+    const PRESSURE_CRIT = 160;        // Bar -> red
+    const DECEL_WARN = 8.5;           // m/s² -> moderate
+    const DECEL_CRIT = 10.5;          // m/s² -> intense braking
+    
+    // Chart instances
+    let pressureChartObj = null;
+    let decelChartObj = null;
+    
+    // DOM elements
+    const pressureValueSpan = document.getElementById('pressureValue');
+    const decelValueSpan = document.getElementById('decelValue');
+    const pressureFillDiv = document.getElementById('pressureFill');
+    const decelFillDiv = document.getElementById('decelFill');
+    const pressureAlertDiv = document.getElementById('pressureAlert');
+    const decelAlertDiv = document.getElementById('decelAlert');
+    const lastUpdateSpan = document.getElementById('lastUpdateText');
+    const sysStatusSpan = document.getElementById('sysStatusMsg');
+    const refreshBtn = document.getElementById('manualRefreshBtn');
+    
+    // Helper: format time nicely
+    function formatDateTime(dateObj) {
+        if (!dateObj) return 'N/A';
+        return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    
+    // Update alert badges & system status based on current values
+    function updateAlerts(pressure, decel) {
+        // Pressure alerts
+        let pressureIcon = '<i class="fas fa-gauge-high"></i> ';
+        let pressureText = '';
+        let pressureColorClass = '';
+        if (pressure >= PRESSURE_CRIT) {
+            pressureText = 'CRITICAL PRESSURE';
+            pressureColorClass = 'status-critical';
+            pressureAlertDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span class="${pressureColorClass}">${pressureText} · OVERLOAD</span>`;
+        } else if (pressure >= PRESSURE_WARN) {
+            pressureText = 'HIGH PRESSURE';
+            pressureColorClass = 'status-warning';
+            pressureAlertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> <span class="${pressureColorClass}">${pressureText} · elevated wear risk</span>`;
+        } else {
+            pressureText = 'NOMINAL RANGE';
+            pressureColorClass = 'status-ok';
+            pressureAlertDiv.innerHTML = `<i class="fas fa-check-circle"></i> <span class="${pressureColorClass}">${pressureText} · normal operation</span>`;
+        }
+        
+        // Deceleration alerts
+        if (decel >= DECEL_CRIT) {
+            decelAlertDiv.innerHTML = `<i class="fas fa-skull-crosswalk"></i> <span class="status-critical">EMERGENCY DECEL · high G-force</span>`;
+        } else if (decel >= DECEL_WARN) {
+            decelAlertDiv.innerHTML = `<i class="fas fa-waveform"></i> <span class="status-warning">MODERATE BRAKING · performance active</span>`;
+        } else {
+            decelAlertDiv.innerHTML = `<i class="fas fa-car-side"></i> <span class="status-ok">SMOOTH DECELERATION · nominal</span>`;
+        }
+        
+        // overall system status message on footer
+        if (pressure >= PRESSURE_CRIT || decel >= DECEL_CRIT) {
+            sysStatusSpan.innerHTML = '⚠️ BRAKE EVENT | URGENT ATTENTION ⚠️';
+            sysStatusSpan.style.color = '#F87171';
+        } else if (pressure >= PRESSURE_WARN || decel >= DECEL_WARN) {
+            sysStatusSpan.innerHTML = '🔶 PERFORMANCE BRAKING | monitor closely';
+            sysStatusSpan.style.color = '#FACC15';
+        } else {
+            sysStatusSpan.innerHTML = '✅ SYSTEM NOMINAL · READY';
+            sysStatusSpan.style.color = '#4ADE80';
         }
     }
-
-    // Refresh every 15 seconds (ThingSpeak free tier limit)
-    setInterval(fetchData, 15000);
-    fetchData();
+    
+    // Update progress bars (percentage based on max)
+    function updateProgressBars(pressure, decel) {
+        let pressurePercent = Math.min(100, (pressure / PRESSURE_MAX) * 100);
+        let decelPercent = Math.min(100, (decel / DECEL_MAX) * 100);
+        pressureFillDiv.style.width = `${pressurePercent}%`;
+        decelFillDiv.style.width = `${decelPercent}%`;
+        // dynamic color hint on fill (optional gradient handled by css)
+        if (pressurePercent > 85) {
+            pressureFillDiv.style.background = "linear-gradient(90deg, #FF5E5E, #FF8C42)";
+        } else {
+            pressureFillDiv.style.background = "linear-gradient(90deg, #FF8C42, #FFB347)";
+        }
+        if (decelPercent > 80) {
+            decelFillDiv.style.background = "linear-gradient(90deg, #F97316, #FF4D4D)";
+        } else {
+            decelFillDiv.style.background = "linear-gradient(90deg, #38BDF8, #7AA2F7)";
+        }
+    }
+    
+    // Central fetch: get last N feeds from ThingSpeak, update UI + charts
+    async function fetchBrakeData() {
+        try {
+            // Show loading indication on button
+            const originalBtnText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> syncing';
+            refreshBtn.disabled = true;
+            
+            const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=${RESULTS_COUNT}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            
+            const feeds = data.feeds;
+            if (!feeds || feeds.length === 0) throw new Error("No data from ThingSpeak");
+            
+            // Prepare arrays for charts (chronological order)
+            // feeds are descending (newest first) from API, we reverse to ascending (oldest -> newest)
+            const ascendingFeeds = [...feeds].reverse();
+            
+            // Extract data: timestamps, pressure (field1), deceleration (field2)
+            const timestamps = [];
+            const pressureValues = [];
+            const decelValues = [];
+            
+            for (let feed of ascendingFeeds) {
+                let rawPressure = feed.field1;
+                let rawDecel = feed.field2;
+                let timePoint = feed.created_at ? new Date(feed.created_at) : null;
+                if (timePoint && !isNaN(timePoint.getTime())) {
+                    timestamps.push(timePoint.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' }));
+                } else {
+                    timestamps.push("?");
+                }
+                let pressureNum = (rawPressure !== null && rawPressure !== undefined && rawPressure !== "") ? parseFloat(rawPressure) : NaN;
+                let decelNum = (rawDecel !== null && rawDecel !== undefined && rawDecel !== "") ? parseFloat(rawDecel) : NaN;
+                pressureValues.push(isNaN(pressureNum) ? null : pressureNum);
+                decelValues.push(isNaN(decelNum) ? null : decelNum);
+            }
+            
+            // Latest values = last element of ascendingFeeds (most recent)
+            const latestFeed = feeds[0]; // newest feed from API (index 0)
+            let latestPressure = (latestFeed.field1 !== undefined && latestFeed.field1 !== "") ? parseFloat(latestFeed.field1) : 0;
+            let latestDecel = (latestFeed.field2 !== undefined && latestFeed.field2 !== "") ? parseFloat(latestFeed.field2) : 0;
+            if (isNaN(latestPressure)) latestPressure = 0;
+            if (isNaN(latestDecel)) latestDecel = 0;
+            
+            // Update main numeric displays
+            pressureValueSpan.innerText = latestPressure.toFixed(1);
+            decelValueSpan.innerText = latestDecel.toFixed(2);
+            
+            // Update progress bars & alerts
+            updateProgressBars(latestPressure, latestDecel);
+            updateAlerts(latestPressure, latestDecel);
+            
+            // Update timestamp (latest feed timestamp from server)
+            let latestTimeStr = "just now";
+            if (latestFeed.created_at) {
+                const serverDate = new Date(latestFeed.created_at);
+                latestTimeStr = serverDate.toLocaleString([], { hour: '2-digit', minute:'2-digit', second:'2-digit', day:'2-digit', month:'short' });
+                lastUpdateSpan.innerHTML = `<i class="far fa-clock"></i> ${latestTimeStr}`;
+            } else {
+                lastUpdateSpan.innerHTML = `<i class="far fa-clock"></i> ${new Date().toLocaleTimeString()}`;
+            }
+            
+            // Update or create CHARTS (Pressure + Decel trends)
+            if (pressureChartObj && decelChartObj) {
+                // Update existing charts data and labels
+                pressureChartObj.data.labels = timestamps;
+                pressureChartObj.data.datasets[0].data = pressureValues;
+                pressureChartObj.update('none');
+                
+                decelChartObj.data.labels = timestamps;
+                decelChartObj.data.datasets[0].data = decelValues;
+                decelChartObj.update('none');
+            } else {
+                // Initialize charts if first run
+                const ctxPressure = document.getElementById('pressureChart').getContext('2d');
+                const ctxDecel = document.getElementById('decelChart').getContext('2d');
+                
+                pressureChartObj = new Chart(ctxPressure, {
+                    type: 'line',
+                    data: {
+                        labels: timestamps,
+                        datasets: [{
+                            label: 'Pressure (Bar)',
+                            data: pressureValues,
+                            borderColor: '#FF8C42',
+                            backgroundColor: 'rgba(255, 140, 66, 0.05)',
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#FFB347',
+                            pointBorderColor: '#0F172A',
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { labels: { color: '#CBD5E1', font: { size: 10 } }, position: 'top' },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Bar', color: '#94A3B8' }, min: 0, max: PRESSURE_MAX },
+                            x: { ticks: { color: '#9CA3AF', maxRotation: 35, autoSkip: true }, grid: { display: false } }
+                        }
+                    }
+                });
+                
+                decelChartObj = new Chart(ctxDecel, {
+                    type: 'line',
+                    data: {
+                        labels: timestamps,
+                        datasets: [{
+                            label: 'Deceleration (m/s²)',
+                            data: decelValues,
+                            borderColor: '#38BDF8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.05)',
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#7AA2F7',
+                            pointBorderColor: '#0F172A',
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { labels: { color: '#CBD5E1', font: { size: 10 } } },
+                            tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toFixed(2)} m/s²` } }
+                        },
+                        scales: {
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'm/s²', color: '#94A3B8' }, min: 0, max: DECEL_MAX + 1.5 },
+                            x: { ticks: { color: '#9CA3AF', maxRotation: 35, autoSkip: true }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+            
+            // small UI success tweak
+            refreshBtn.innerHTML = originalBtnText;
+            refreshBtn.disabled = false;
+            
+        } catch (error) {
+            console.error("ThingSpeak fetch error:", error);
+            pressureValueSpan.innerText = "ERR";
+            decelValueSpan.innerText = "ERR";
+            lastUpdateSpan.innerHTML = `<i class="fas fa-exclamation-triangle"></i> update failed`;
+            sysStatusSpan.innerHTML = '⚠️ DATA FEED ERROR ⚠️';
+            sysStatusSpan.style.color = '#F87171';
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> retry';
+                refreshBtn.disabled = false;
+            }
+        }
+    }
+    
+    // Manual refresh trigger with debounce
+    let refreshing = false;
+    async function manualRefresh() {
+        if (refreshing) return;
+        refreshing = true;
+        await fetchBrakeData();
+        setTimeout(() => { refreshing = false; }, 2000);
+    }
+    
+    // Auto refresh interval (15 seconds - respects ThingSpeak free tier limits)
+    let intervalId = null;
+    function startAutoRefresh() {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => {
+            if (!refreshing) {
+                fetchBrakeData().catch(e => console.warn("auto-refresh err", e));
+            }
+        }, 15000);
+    }
+    
+    // Event binding and initialization
+    refreshBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        manualRefresh();
+    });
+    
+    // initial load and kickstart
+    fetchBrakeData().then(() => {
+        startAutoRefresh();
+    }).catch(err => {
+        console.error("initial fetch failed", err);
+        startAutoRefresh(); // still start interval but it will try
+    });
+    
+    // Optional: cleanup on page hide (no need)
 </script>
-
 </body>
 </html>
